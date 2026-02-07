@@ -13,17 +13,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build DuckDB on Amazon Linux
+      - name: Build DuckDB on Lambda Python 3.9
         run: |
           docker run --rm \
             -v "${{ github.workspace }}:/var/task" \
-            public.ecr.aws/amazonlinux/amazonlinux:2 \
+            public.ecr.aws/lambda/python:3.9 \
             bash -c "
-              yum install -y python39 python39-pip zip &&
               cd /var/task &&
               mkdir -p python &&
-              python3.9 -m pip install --upgrade pip &&
-              python3.9 -m pip install duckdb -t python &&
+              pip install duckdb -t python &&
               zip -r duckdb-layer.zip python
             "
 
@@ -32,3 +30,4 @@ jobs:
         with:
           name: duckdb-layer
           path: duckdb-layer.zip
+
