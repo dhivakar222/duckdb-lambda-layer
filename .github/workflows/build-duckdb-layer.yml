@@ -1,33 +1,20 @@
-name: Build DuckDB Lambda Layer
+- name: Build DuckDB on Lambda Python 3.9
+  run: |
+    docker run --rm \
+      --entrypoint bash \
+      -v "${{ github.workspace }}:/var/task" \
+      public.ecr.aws/lambda/python:3.9 \
+      -c "
+        cd /var/task &&
+        mkdir -p python &&
+        pip install duckdb -t python &&
+        python - << 'EOF'
+import zipfile, os
 
-on:
-  push:
-    branches:
-      - main
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Build DuckDB on Lambda Python 3.9
-        run: |
-          docker run --rm \
-            --entrypoint bash \
-            -v "${{ github.workspace }}:/var/task" \
-            public.ecr.aws/lambda/python:3.9 \
-            -c "
-              cd /var/task &&
-              mkdir -p python &&
-              pip install duckdb -t python &&
-              zip -r duckdb-layer.zip python
-            "
-
-      - name: Upload layer zip
-        uses: actions/upload-artifact@v4
-        with:
-          name: duckdb-layer
-          path: duckdb-layer.zip
+with zipfile.ZipFile('duckdb-layer.zip', 'w', zipfile.ZIP_DEFLATED) as z:
+    for root, dirs, files in os.walk('python'):
+        for file in files:
+            path = os.path.join(root, file)
+            z.write(path, path)
+EOF
+      "
