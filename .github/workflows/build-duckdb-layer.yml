@@ -19,24 +19,18 @@ jobs:
             --entrypoint bash \
             -v "${{ github.workspace }}:/var/task" \
             public.ecr.aws/lambda/python:3.9 \
-            -c '
+            -c "
               set -e
               cd /var/task
               mkdir -p python
               pip install duckdb -t python
-              python - <<EOF
-import zipfile, os
-
-with zipfile.ZipFile("duckdb-layer.zip", "w", zipfile.ZIP_DEFLATED) as z:
-    for root, dirs, files in os.walk("python"):
-        for file in files:
-            path = os.path.join(root, file)
-            z.write(path, path)
-EOF
-            '
+              python -c \"import zipfile, os; z=zipfile.ZipFile('duckdb-layer.zip','w',zipfile.ZIP_DEFLATED); \
+              [z.write(os.path.join(r,f), os.path.join(r,f)) for r,_,fs in os.walk('python') for f in fs]; z.close()\"
+            "
 
       - name: Upload layer zip
         uses: actions/upload-artifact@v4
         with:
           name: duckdb-layer
           path: duckdb-layer.zip
+
