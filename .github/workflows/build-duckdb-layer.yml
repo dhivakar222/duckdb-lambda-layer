@@ -16,9 +16,10 @@ jobs:
       - name: Build DuckDB on Lambda Python 3.9
         run: |
           docker run --rm \
+            --entrypoint bash \
             -v "${{ github.workspace }}:/var/task" \
             public.ecr.aws/lambda/python:3.9 \
-            bash -c "
+            -c "
               cd /var/task &&
               mkdir -p python &&
               pip install duckdb -t python &&
@@ -30,4 +31,3 @@ jobs:
         with:
           name: duckdb-layer
           path: duckdb-layer.zip
-
