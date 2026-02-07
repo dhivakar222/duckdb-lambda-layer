@@ -1,0 +1,34 @@
+name: Build DuckDB Lambda Layer
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build DuckDB on Amazon Linux
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/var/task" \
+            public.ecr.aws/amazonlinux/amazonlinux:2 \
+            bash -c "
+              yum install -y python39 python39-pip zip &&
+              cd /var/task &&
+              mkdir -p python &&
+              python3.9 -m pip install --upgrade pip &&
+              python3.9 -m pip install duckdb -t python &&
+              zip -r duckdb-layer.zip python
+            "
+
+      - name: Upload layer zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: duckdb-layer
+          path: duckdb-layer.zip
